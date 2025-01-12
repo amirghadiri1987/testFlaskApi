@@ -1,1 +1,4 @@
-web: python tesy.py
+my-flask-app/
+    ├── tesy.py
+    ├── requirements.txt
+    ├── Procfile
