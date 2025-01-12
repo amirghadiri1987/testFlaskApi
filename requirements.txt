@@ -1,4 +1,2 @@
 Flask
 pandas
-
-web: python app.py
