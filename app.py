@@ -46,8 +46,8 @@ def generate_graph(input_file, output_file):
         return f"An error occurred while processing the file: {str(e)}"
 
 # Use fixed Linux-style paths
-input_csv = "Files/Break EA/Aron Markets Ltd/10984/AnalysisOutput/Transaction10984.csv"
-output_image = "Files/Break EA/Aron Markets Ltd/10984/AnalysisOutput/Transaction10984_plot.png"
+input_csv = "C:/Users/amirghadiri/AppData/Roaming/MetaQuotes/Terminal/DF61353BF8A1A742719A92383DEF4BE0/MQL5/Files/Break EA/Aron Markets Ltd/Transaction.csv"
+output_image = "C:/Users/amirghadiri/AppData/Roaming/MetaQuotes/Terminal/DF61353BF8A1A742719A92383DEF4BE0/MQL5/Files/Break EA/Aron Markets Ltd/10984/AnalysisOutput/Transaction10984_plot.png"
 
 # Call the function and print the result
 result = generate_graph(input_csv, output_image)
