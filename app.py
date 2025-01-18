@@ -1,54 +1,34 @@
+from flask import Flask, request, jsonify
 import os
-import pandas as pd
-import matplotlib.pyplot as plt
 
-def generate_graph(input_file, output_file):
-    # Verify the input file exists
-    if not os.path.exists(input_file):
-        return f"Error: Input file '{input_file}' does not exist."
+app = Flask(__name__)
 
-    # Verify the script has write permissions for the output directory
-    output_dir = os.path.dirname(output_file)
-    if not os.access(output_dir, os.W_OK):
-        return f"Error: No write permissions for the directory '{output_dir}'."
+# Base directory for client data
+BASE_DIR = "/path/to/client_data"
 
-    try:
-        # Read the CSV into a pandas DataFrame
-        df = pd.read_csv(input_file)
-        print("Data preview:")
-        print(df.head())
+@app.route('/upload_transaction', methods=['POST'])
+def upload_transaction():
+    client_id = request.headers.get('Client-ID')
+    transaction_data = request.json
 
-        # Convert 'Open Time' column to datetime
-        df['Open Time'] = pd.to_datetime(df['Open Time'], errors='coerce')
+    # Debugging logs
+    print(f"Received Client-ID: {client_id}")
+    print(f"Received Transaction Data: {transaction_data}")
 
-        # Check if the necessary columns exist
-        if 'Open Time' in df.columns and 'Profit' in df.columns:
-            # Plot the data
-            plt.figure(figsize=(10, 6))
-            plt.plot(df['Open Time'], df['Profit'], label='Profit Over Time', color='blue')
-            plt.title('Transaction Profit Data')
-            plt.xlabel('Open Time')
-            plt.ylabel('Profit')
-            plt.xticks(rotation=45)
-            plt.grid(True)
-            plt.legend()
-            plt.tight_layout()
+    if not client_id:
+        return jsonify({"error": "Client-ID missing"}), 400
+    if not transaction_data:
+        return jsonify({"error": "Transaction data missing or invalid"}), 400
 
-            # Save the plot as a PNG image
-            plt.savefig(output_file)
-            plt.close()
+    # Process and save the transaction
+    client_dir = os.path.join(BASE_DIR, client_id)
+    os.makedirs(client_dir, exist_ok=True)
+    transaction_file = os.path.join(client_dir, "transaction.json")
+    with open(transaction_file, "a") as file:
+        file.write(f"{transaction_data}\n")
 
-            return f"Graph generated and saved successfully to '{output_file}'."
-        else:
-            return "Error: Columns 'Open Time' and 'Profit' not found in the CSV."
+    return jsonify({"status": "success"}), 200
 
-    except Exception as e:
-        return f"An error occurred while processing the file: {str(e)}"
 
-# Use fixed Linux-style paths
-input_csv = "Files/Break EA/Aron Markets Ltd/Trade_Transaction.csv"
-output_image = "Files/Break EA/Aron Markets Ltd/10984/AnalysisOutput/Transaction10984_plot.png"
-
-# Call the function and print the result
-result = generate_graph(input_csv, output_image)
-print(result)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)  # Bind to all interfaces
