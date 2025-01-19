@@ -4,7 +4,7 @@ import os
 app = Flask(__name__)
 
 # Set the directory to save files
-UPLOAD_FOLDER = '/ServerUpload/1001/'
+UPLOAD_FOLDER = '/root/EA_Server/ServerUpload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/upload_csv', methods=['POST'])
