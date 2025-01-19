@@ -1,32 +1,57 @@
-import os
 from flask import Flask, request, jsonify
+import os
 
 app = Flask(__name__)
 
-# Directory for uploaded files
-UPLOAD_FOLDER = './ServerUpload'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure base upload folder exists
+# Define the root upload folder
+UPLOAD_ROOT = '/root/EA_Server/ServerUpload'
+os.makedirs(UPLOAD_ROOT, exist_ok=True)  # Ensure the base upload folder exists
 
-@app.route('/upload_csv', methods=['POST'])
-def upload_csv():
-    if 'file' not in request.files or 'clientID' not in request.form:
-        return jsonify({'error': 'File or clientID not provided'}), 400
+@app.route('/upload/<client_id>', methods=['POST'])
+def upload_file(client_id):
+    """
+    Endpoint to upload a file for a specific client.
+    :param client_id: Identifier for the client (e.g., 'client_001')
+    """
+    # Ensure the client's folder exists
+    client_folder = os.path.join(UPLOAD_ROOT, client_id)
+    os.makedirs(client_folder, exist_ok=True)
+    
+    # Debug: Include client folder path in response
+    print(f"Client folder path: {client_folder}")
+
+    if 'file' not in request.files:
+        return jsonify({
+            'error': 'No file part in the request',
+            'client_folder_path': client_folder
+        }), 400
 
     file = request.files['file']
-    client_id = request.form['clientID']  # Retrieve clientID from form data
-
     if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+        return jsonify({
+            'error': 'No file selected',
+            'client_folder_path': client_folder
+        }), 400
 
-    # Create client-specific folder
-    client_folder = os.path.join(UPLOAD_FOLDER, client_id)
-    os.makedirs(client_folder, exist_ok=True)
-
-    # Save the file to the client-specific folder
+    # Save the file in the client's folder
     file_path = os.path.join(client_folder, file.filename)
-    file.save(file_path)
-
-    return jsonify({'message': 'File uploaded successfully', 'file_path': file_path}), 200
+    try:
+        file.save(file_path)
+        # Debug: Confirm file save success and path
+        print(f"File saved successfully at: {file_path}")
+        return jsonify({
+            'message': f'File uploaded successfully for {client_id}',
+            'file_path': file_path,
+            'client_folder_path': client_folder
+        }), 200
+    except Exception as e:
+        # Debug: Log the exception and directory path
+        print(f"Error saving file: {e}")
+        print(f"Attempted file path: {file_path}")
+        return jsonify({
+            'error': str(e),
+            'client_folder_path': client_folder
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
