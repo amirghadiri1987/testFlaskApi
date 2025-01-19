@@ -3,34 +3,22 @@ import os
 
 app = Flask(__name__)
 
-# Define the root upload folder
-UPLOAD_ROOT = '/root/EA_Server/ServerUpload'
-os.makedirs(UPLOAD_ROOT, exist_ok=True)  # Ensure the base upload folder exists
+# Set the directory to save files
+UPLOAD_FOLDER = '/root/EA_Server/ServerUpload'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/upload/<client_id>', methods=['POST'])
-def upload_file(client_id):
-    """
-    Endpoint to upload a file for a specific client.
-    :param client_id: Identifier for the client (e.g., 'client_001')
-    """
-    # Ensure the client's folder exists
-    client_folder = os.path.join(UPLOAD_ROOT, client_id)
-    os.makedirs(client_folder, exist_ok=True)
-
+@app.route('/upload_csv', methods=['POST'])
+def upload_csv():
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
-
+        return jsonify({'status': 'fail', 'message': 'No file part'}), 400
+    
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+        return jsonify({'status': 'fail', 'message': 'No selected file'}), 400
 
-    # Save the file in the client's folder
-    file_path = os.path.join(client_folder, file.filename)
-    try:
-        file.save(file_path)
-        return jsonify({'message': f'File uploaded successfully for {client_id}: {file_path}'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Save the file
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+    return jsonify({'status': 'success', 'message': 'File uploaded successfully'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
