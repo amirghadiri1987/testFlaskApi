@@ -16,21 +16,42 @@ def upload_file(client_id):
     # Ensure the client's folder exists
     client_folder = os.path.join(UPLOAD_ROOT, client_id)
     os.makedirs(client_folder, exist_ok=True)
+    
+    # Debug: Include client folder path in response
+    print(f"Client folder path: {client_folder}")
 
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
+        return jsonify({
+            'error': 'No file part in the request',
+            'client_folder_path': client_folder
+        }), 400
 
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+        return jsonify({
+            'error': 'No file selected',
+            'client_folder_path': client_folder
+        }), 400
 
     # Save the file in the client's folder
     file_path = os.path.join(client_folder, file.filename)
     try:
         file.save(file_path)
-        return jsonify({'message': f'File uploaded successfully for {client_id}: {file_path}'}), 200
+        # Debug: Confirm file save success and path
+        print(f"File saved successfully at: {file_path}")
+        return jsonify({
+            'message': f'File uploaded successfully for {client_id}',
+            'file_path': file_path,
+            'client_folder_path': client_folder
+        }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Debug: Log the exception and directory path
+        print(f"Error saving file: {e}")
+        print(f"Attempted file path: {file_path}")
+        return jsonify({
+            'error': str(e),
+            'client_folder_path': client_folder
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
