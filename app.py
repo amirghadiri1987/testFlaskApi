@@ -27,16 +27,5 @@ def upload_csv():
     file.save(file_path)
 
     return jsonify({'message': 'File uploaded successfully', 'file_path': file_path}), 200
-@app.route('/upload_csv', methods=['POST'])
-def upload_csv():
-    print("Request received")
-    print("Request form data:", request.form)
-    print("Request files:", request.files)
-
-    clientID = request.form.get('clientID')
-    file = request.files.get('file')
-
-    if not clientID or not file:
-        return jsonify({"error": "File or clientID not provided"}), 400
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
