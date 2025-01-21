@@ -14,7 +14,7 @@ def check_csv():
     file_name = request.form.get('fileName')
 
     if not client_id or not file_name:
-        return jsonify({'error': 'Missing clientID or fileName'}), 400
+        return jsonify({'status': 'fail', 'message': 'Missing clientID or fileName'}), 400
 
     # Construct the file path
     client_folder = os.path.join(UPLOAD_FOLDER, client_id)
@@ -25,13 +25,25 @@ def check_csv():
 
     # Check if the file exists
     if not os.path.exists(file_path):
-        return jsonify({'status': 'fail', 'message': f'File does not exist: {file_path}'}), 404
+        return jsonify({'status': 'fail', 'message': f'File does not exist', 'file_path': file_path}), 404
 
     # Count the rows in the file if it exists
-    with open(file_path, 'r') as file:
-        row_count = sum(1 for line in file)
+    try:
+        with open(file_path, 'r') as file:
+            row_count = sum(1 for line in file)
+        return jsonify({
+            'status': 'success',
+            'message': 'File exists',
+            'rows': row_count,
+            'file_path': file_path
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'fail',
+            'message': str(e),
+            'file_path': file_path
+        }), 500
 
-    return jsonify({'status': 'success', 'message': 'File exists', 'rows': row_count, 'file_path': file_path}), 200
 
 @app.route('/upload_csv', methods=['POST'])
 def upload_csv():
