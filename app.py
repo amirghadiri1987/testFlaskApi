@@ -1,42 +1,54 @@
 from flask import Flask, request, jsonify
 import os
-import csv
 
 app = Flask(__name__)
 
-# Base directory for uploads
+# Set the base directory to save files
 UPLOAD_FOLDER = '/root/EA_Server/ServerUpload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/check_csv', methods=['POST'])
-def check_csv():
+@app.route('/upload_csv', methods=['POST'])
+def upload_csv():
     client_id = request.form.get('clientID')
-    file_name = request.form.get('fileName')
+    if not client_id:
+        return jsonify({'status': 'fail', 'message': 'Missing clientID'}), 400
 
-    # Debugging: Print clientID and fileName
-    print(f"Received clientID: {client_id}, fileName: {file_name}")
+    if 'file' not in request.files:
+        return jsonify({'status': 'fail', 'message': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'status': 'fail', 'message': 'No selected file'}), 400
 
-    if not client_id or not file_name:
-        return jsonify({'status': 'fail', 'message': 'Missing clientID or fileName'}), 400
-
-    # Construct file path
+    # Create a unique folder for the client
     client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
-    file_path = os.path.join(client_folder, file_name)
+    os.makedirs(client_folder, exist_ok=True)
 
-    # Debugging: Print constructed file path
-    print(f"Checking file path: {file_path}")
+    # Save the file in the client's folder
+    file_path = os.path.join(client_folder, file.filename)
+    file.save(file_path)
 
-    # Check if the file exists
-    if not os.path.exists(file_path):
-        return jsonify({'status': 'fail', 'message': f'File does not exist: {file_path}'}), 404
+    return jsonify({'status': 'success', 'message': 'File uploaded successfully', 'path': file_path}), 200
 
-    # Count rows in the file
-    try:
-        with open(file_path, 'r') as csv_file:
-            row_count = sum(1 for row in csv.reader(csv_file))
-        return jsonify({'status': 'success', 'message': 'File exists', 'row_count': row_count, 'path': file_path}), 200
-    except Exception as e:
-        return jsonify({'status': 'fail', 'message': f'Error reading file: {str(e)}'}), 500
+@app.route('/check_csv', methods=['GET'])
+def check_csv():
+    client_id = request.args.get('clientID')
+    if not client_id:
+         return jsonify({'status': 'fail', 'message': 'Missing clientID'}), 400
+
+    client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
+    
+    if not os.path.exists(client_folder):
+        return jsonify({'status': 'fail', 'message': 'Client folder not found'}), 404
+
+    csv_files = [f for f in os.listdir(client_folder) if f.lower().endswith('.csv')]
+    
+    if csv_files:
+      return jsonify({'status': 'success', 'message': 'CSV file(s) found', 'files': csv_files}), 200
+    else:
+        return jsonify({'status': 'fail', 'message': 'No CSV files found'}), 404
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
