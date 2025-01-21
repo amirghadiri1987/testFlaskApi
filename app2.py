@@ -8,20 +8,16 @@ app = Flask(__name__)
 UPLOAD_FOLDER = '/root/EA_Server/ServerUpload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
 @app.route('/check_csv', methods=['POST'])
 def check_csv():
-    """
-    Check if a CSV file exists for a client and return the number of rows.
-    """
     client_id = request.form.get('clientID')
     file_name = request.form.get('fileName')
 
     if not client_id or not file_name:
-        return jsonify({'status': 'fail', 'message': 'Missing clientID or fileName'}), 400
+        return jsonify({'error': 'Missing clientID or fileName'}), 400
 
     # Construct the file path
-    client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
+    client_folder = os.path.join(UPLOAD_FOLDER, client_id)
     file_path = os.path.join(client_folder, file_name)
 
     # Print the file path for debugging
@@ -29,16 +25,13 @@ def check_csv():
 
     # Check if the file exists
     if not os.path.exists(file_path):
-        return jsonify({'status': 'fail', 'message': 'File does not exist'}), 404
+        return jsonify({'status': 'fail', 'message': f'File does not exist: {file_path}'}), 404
 
-    # Count the number of rows in the CSV file
-    try:
-        with open(file_path, 'r') as csv_file:
-            row_count = sum(1 for _ in csv.reader(csv_file))
-        return jsonify({'status': 'success', 'message': 'File exists', 'rows': row_count}), 200
-    except Exception as e:
-        return jsonify({'status': 'fail', 'message': f'Error reading the file: {str(e)}'}), 500
+    # Count the rows in the file if it exists
+    with open(file_path, 'r') as file:
+        row_count = sum(1 for line in file)
 
+    return jsonify({'status': 'success', 'message': 'File exists', 'rows': row_count, 'file_path': file_path}), 200
 
 @app.route('/upload_csv', methods=['POST'])
 def upload_csv():
