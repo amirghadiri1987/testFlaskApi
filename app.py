@@ -33,22 +33,20 @@ def upload_csv():
 @app.route('/check_csv', methods=['GET'])
 def check_csv():
     client_id = request.args.get('clientID')
-    if not client_id:
-         return jsonify({'status': 'fail', 'message': 'Missing clientID'}), 400
+    file_name = request.args.get('fileName')
+    
+    if not client_id or not file_name:
+        return jsonify({'status': 'fail', 'message': 'Missing clientID or fileName'}), 400
 
+    # Construct the file path
     client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
-    
-    if not os.path.exists(client_folder):
-        return jsonify({'status': 'fail', 'message': 'Client folder not found'}), 404
+    file_path = os.path.join(client_folder, file_name)
 
-    csv_files = [f for f in os.listdir(client_folder) if f.lower().endswith('.csv')]
-    
-    if csv_files:
-      return jsonify({'status': 'success', 'message': 'CSV file(s) found', 'files': csv_files}), 200
+    # Check if the file exists
+    if os.path.exists(file_path):
+        return jsonify({'status': 'success', 'message': 'File exists', 'path': file_path}), 200
     else:
-        return jsonify({'status': 'fail', 'message': 'No CSV files found'}), 404
-
-
+        return jsonify({'status': 'fail', 'message': 'File not found', 'path': file_path}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
