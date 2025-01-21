@@ -7,6 +7,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = '/root/EA_Server/ServerUpload'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 @app.route('/upload_csv', methods=['POST'])
 def upload_csv():
     client_id = request.form.get('clientID')
@@ -30,23 +31,14 @@ def upload_csv():
 
     return jsonify({'status': 'success', 'message': 'File uploaded successfully', 'path': file_path}), 200
 
-@app.route('/list_files', methods=['GET'])
-def list_files():
-    try:
-        # List the contents of the base directory
-        base_folder = app.config['UPLOAD_FOLDER']
-        if not os.path.exists(base_folder):
-            return jsonify({'status': 'fail', 'message': f"Directory '{base_folder}' does not exist"}), 404
-
-        contents = {}
-        for client_id in os.listdir(base_folder):
-            client_folder = os.path.join(base_folder, client_id)
-            if os.path.isdir(client_folder):
-                contents[client_id] = os.listdir(client_folder)
-        
-        return jsonify({'status': 'success', 'contents': contents}), 200
-    except Exception as e:
-        return jsonify({'status': 'fail', 'message': str(e)}), 500
+@app.route('/check_file', methods=['GET'])
+def check_file():
+    file_path = "/root/EA_Server/ServerUpload/Trade_Transaction.csv"
+    
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return jsonify({'status': 'success', 'message': 'File found', 'path': file_path}), 200
+    else:
+        return jsonify({'status': 'fail', 'message': 'File not found'}), 404
 
 
 if __name__ == '__main__':
