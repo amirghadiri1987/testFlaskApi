@@ -24,6 +24,9 @@ def check_csv():
     client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
     file_path = os.path.join(client_folder, file_name)
 
+    # Print the file path for debugging
+    print(f"Checking file path: {file_path}")
+
     # Check if the file exists
     if not os.path.exists(file_path):
         return jsonify({'status': 'fail', 'message': 'File does not exist'}), 404
