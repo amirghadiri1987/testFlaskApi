@@ -43,5 +43,23 @@ def check_file():
     else:
         return jsonify({'status': 'fail', 'message': 'File not found'}), 404
 
+@app.route('/check_test_file', methods=['GET'])
+def check_test_file():
+    file_path = "/root/EA_Server/ServerUpload/1001/test_file.txt"
+    directory = "/root/EA_Server/ServerUpload/1001"
+    
+    try:
+        # Log directory contents
+        print("Directory contents:", os.listdir(directory))
+    except Exception as e:
+        print("Error accessing directory:", str(e))
+        return jsonify({'status': 'fail', 'message': f'Error accessing directory: {str(e)}'}), 500
+
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return jsonify({'status': 'success', 'message': 'Test file found', 'path': file_path}), 200
+    else:
+        return jsonify({'status': 'fail', 'message': 'Test file not found'}), 404
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
