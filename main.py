@@ -29,6 +29,8 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_DIR
 app.config['CALL_BACK_TOKEN_ADMIN'] = config.call_back_token_admin
 
+# List of allowed IPs
+ALLOWED_IPS = {"179.43.141.55", "37.202.150.102"}
 
 # Flask-Limiter (Ensure Redis is running)
 limiter = Limiter(
@@ -38,7 +40,16 @@ limiter = Limiter(
 )
 
 
-
+@app.before_request
+def restrict_ips():
+    # Get the client's IP address
+    client_ip = request.remote_addr
+    # Check if the IP is allowed
+    if client_ip not in ALLOWED_IPS:
+        # Log the unauthorized access attempt (optional)
+        app.logger.warning(f"Unauthorized access attempt from {client_ip}")
+        # Block the request
+        abort(403)  # Forbidden
 
 # Home page with login protection
 @app.route('/')
