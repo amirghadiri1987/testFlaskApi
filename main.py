@@ -1,4 +1,4 @@
-#99
+# 100
 # Standard Library Imports
 import os
 import shutil
@@ -375,7 +375,7 @@ def calculate_outputs(filtered_db_path):
             "NetLoss": calculate_net_loss(df),
             "Balance_mDD": calculate_balance_max_drawdown(df),
             **calculate_drawdown(df),
-            # **calculate_floating_drawdown(df),
+            **calculate_max_min_drawdowns(df),
             **calculate_quantity_metrics(df),
             **calculate_profitability_metrics(df),
             **calculate_profit_distribution(df),
@@ -505,6 +505,69 @@ def calculate_drawdown(df):
 
 # ==================================================== #
 # TODO test function ✅
+def calculate_max_min_drawdowns(df):
+    """
+    Calculate maximum and minimum drawdowns for total, buy, and sell trades.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame with "profit" and "order_type" columns.
+
+    Returns:
+        dict: Formatted maximum and minimum drawdown results.
+    """
+    if df.empty or "profit" not in df.columns or "order_type" not in df.columns:
+        return {}
+
+    df = df.sort_index()
+    
+    # Total Drawdowns
+    max_drawdown_total = (df["peak"] - df["profit"]).max()
+    min_drawdown_total = (df["peak"] - df["profit"]).min()
+
+    # Maximum and Minimum Drawdown for Buy Trades
+    buy_df = df[df["order_type"] == "buy"]
+    max_drawdown_buy = (buy_df["peak"] - buy_df["profit"]).max() if not buy_df.empty else 0
+    min_drawdown_buy = (buy_df["peak"] - buy_df["profit"]).min() if not buy_df.empty else 0
+
+    # Maximum and Minimum Drawdown for Sell Trades
+    sell_df = df[df["order_type"] == "sell"]
+    max_drawdown_sell = (sell_df["peak"] - sell_df["profit"]).max() if not sell_df.empty else 0
+    min_drawdown_sell = (sell_df["peak"] - sell_df["profit"]).min() if not sell_df.empty else 0
+
+    # Calculate percentages
+    peak_value = df["peak"].max()
+    if peak_value > 0:
+        max_drawdown_total_pct = (max_drawdown_total / peak_value) * 100
+        min_drawdown_total_pct = (min_drawdown_total / peak_value) * 100
+        max_drawdown_buy_pct = (max_drawdown_buy / peak_value) * 100
+        min_drawdown_buy_pct = (min_drawdown_buy / peak_value) * 100
+        max_drawdown_sell_pct = (max_drawdown_sell / peak_value) * 100
+        min_drawdown_sell_pct = (min_drawdown_sell / peak_value) * 100
+    else:
+        max_drawdown_total_pct = max_drawdown_buy_pct = max_drawdown_sell_pct = 0
+        min_drawdown_total_pct = min_drawdown_buy_pct = min_drawdown_sell_pct = 0
+
+    # Return formatted results
+    return {
+        "max_drawdown": f"{max_drawdown_total:.2f} ({max_drawdown_total_pct:.0f}%)",
+        "max_drawdown_buy": f"{max_drawdown_buy:.2f} ({max_drawdown_buy_pct:.0f}%)",
+        "max_drawdown_sell": f"{max_drawdown_sell:.2f} ({max_drawdown_sell_pct:.0f}%)",
+        "min_drawdown": f"{min_drawdown_total:.2f} ({min_drawdown_total_pct:.0f}%)",
+        "min_drawdown_buy": f"{min_drawdown_buy:.2f} ({min_drawdown_buy_pct:.0f}%)",
+        "min_drawdown_sell": f"{min_drawdown_sell:.2f} ({min_drawdown_sell_pct:.0f}%)"
+    }
+
+
+
+# ==================================================== #
+# TODO test function ✅
+
+
+# ==================================================== #
+# TODO test function ✅
+
+
+
 def calculate_drawdowns(df):
     """
     Calculate drawdown in both dollar and percentage terms for the entire dataset,
