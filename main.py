@@ -1,4 +1,4 @@
-# 4
+#99
 # Standard Library Imports
 import os
 import shutil
@@ -374,16 +374,16 @@ def calculate_outputs(filtered_db_path):
             "netProfit": calculate_net_profit(df),
             "NetLoss": calculate_net_loss(df),
             "Balance_mDD": calculate_balance_max_drawdown(df),
-            **calculate_drawdown(df)
+            **calculate_drawdown(df),
             # **calculate_floating_drawdown(df),
             **calculate_quantity_metrics(df),
-            # **calculate_profitability_metrics(df),
-            # **calculate_profit_distribution(df),
-            # **calculate_time_metrics(df),
-            # **calculate_time_extremes(df),
-            # **calculate_win_loss_metrics(df),
-            # **calculate_closure_metrics(df),
-            # **calculate_additional_metrics(df)
+            **calculate_profitability_metrics(df),
+            **calculate_profit_distribution(df),
+            **calculate_time_metrics(df),
+            **calculate_time_extremes(df),
+            **calculate_win_loss_metrics(df),
+            **calculate_closure_metrics(df),
+            **calculate_additional_metrics(df)
         }
 
         # Print Test Output
