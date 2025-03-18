@@ -1,4 +1,4 @@
-# Standard Library Imports 1
+# Standard Library Imports 2
 import os
 import shutil
 import csv
@@ -486,9 +486,9 @@ def calculate_drawdown(df):
         df["order_type"] = df["order_type"].astype(str).str.lower()
         results["drawdown_buy"] = calculate_drawdown_for_subset(df[df["order_type"] == "buy"])
         results["drawdown_sell"] = calculate_drawdown_for_subset(df[df["order_type"] == "sell"])
-    # else:
-    #     results["drawdown_buy"] = "0.00 (0%)"
-    #     results["drawdown_sell"] = "0.00 (0%)"
+    else:
+        results["drawdown_buy"] = "0.00 (0%)"
+        results["drawdown_sell"] = "0.00 (0%)"
 
     return results
 
