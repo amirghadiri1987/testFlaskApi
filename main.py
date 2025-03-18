@@ -1,4 +1,4 @@
-# Standard Library Imports 2
+# Standard Library Imports
 import os
 import shutil
 import csv
@@ -449,17 +449,14 @@ def calculate_total_profit(df):
 # TODO test function ✅
 def calculate_drawdown(df):
     """
-    Calculate drawdown in both dollar and percentage terms from the "profit" column,
-    formatted as "$(%)". Also calculates drawdowns separately for "Buy" and "Sell" trades.
+    Calculate total drawdown and separate drawdowns for Buy and Sell trades.
+    Ensures percentages sum correctly.
 
     Parameters:
-        df (pd.DataFrame): DataFrame containing "profit" and "order_type" columns.
+        df (pd.DataFrame): DataFrame with "profit" and "order_type" columns.
 
     Returns:
-        dict: A dictionary containing:
-              - "drawdown": Formatted drawdown for the entire dataset as "$(%)".
-              - "drawdown_buy": Formatted drawdown for "Buy" trades as "$(%)".
-              - "drawdown_sell": Formatted drawdown for "Sell" trades as "$(%)".
+        dict: Drawdown values formatted as "$(%)".
     """
     if df.empty or "profit" not in df.columns:
         return {"drawdown": "0.00 (0%)", "drawdown_buy": "0.00 (0%)", "drawdown_sell": "0.00 (0%)"}
@@ -468,61 +465,42 @@ def calculate_drawdown(df):
 
     def calculate_drawdown_for_subset(sub_df):
         if sub_df.empty:
-            return "0.00 (0%)"
+            return 0.00, 0.00
 
         sub_df = sub_df.copy()
         sub_df["peak"] = sub_df["profit"].cummax()
-        drawdown_dollar = sub_df["peak"] - sub_df["profit"]
-        drawdown_percent = (drawdown_dollar / sub_df["peak"]) * 100
-        drawdown_percent = drawdown_percent.fillna(0)
+        drawdown_dollar = (sub_df["peak"] - sub_df["profit"]).max()
+        peak_value = sub_df["peak"].max()
 
-        return f"{drawdown_dollar.iloc[-1]:.2f} ({drawdown_percent.iloc[-1]:.0f}%)"
+        drawdown_percent = (drawdown_dollar / peak_value * 100) if peak_value > 0 else 0
+        drawdown_percent = min(drawdown_percent, 100)  # Cap at 100%
 
-    # Total drawdown
-    results = {"drawdown": calculate_drawdown_for_subset(df)}
+        return drawdown_dollar, drawdown_percent
 
-    # Ensure "order_type" column exists and is treated as a string
+    # Calculate total drawdown
+    total_dd, total_dd_pct = calculate_drawdown_for_subset(df)
+
+    # Calculate buy/sell drawdowns
     if "order_type" in df.columns:
         df["order_type"] = df["order_type"].astype(str).str.lower()
-        results["drawdown_buy"] = calculate_drawdown_for_subset(df[df["order_type"] == "buy"])
-        results["drawdown_sell"] = calculate_drawdown_for_subset(df[df["order_type"] == "sell"])
+        buy_dd, _ = calculate_drawdown_for_subset(df[df["order_type"] == "buy"])
+        sell_dd, _ = calculate_drawdown_for_subset(df[df["order_type"] == "sell"])
     else:
-        results["drawdown_buy"] = "0.00 (0%)"
-        results["drawdown_sell"] = "0.00 (0%)"
+        buy_dd, sell_dd = 0.00, 0.00
 
-    return results
+    # Ensure total drawdown matches buy + sell
+    if abs(total_dd - (buy_dd + sell_dd)) > 1e-2:
+        total_dd = buy_dd + sell_dd  
 
+    # Fix percentage distribution
+    buy_pct = (buy_dd / total_dd * total_dd_pct) if total_dd > 0 else 0
+    sell_pct = (sell_dd / total_dd * total_dd_pct) if total_dd > 0 else 0
 
-# def calculate_drawdown_percentAndcurrent(df):
-#     """
-#     Calculate drawdown in both dollar and percentage terms from the "profit" column,
-#     and format the result as "$(%)".
-
-#     Parameters:
-#         df (pd.DataFrame): DataFrame containing a "profit" column.
-
-#     Returns:
-#         str: Formatted drawdown as "$(%)".
-#     """
-#     # Ensure the DataFrame is sorted by index (or time) if not already
-#     df = df.sort_index()
-
-#     # Calculate cumulative maximum profit (peak)
-#     df["peak"] = df["profit"].cummax()
-
-#     # Calculate drawdown in dollar terms
-#     drawdown_dollar = df["peak"] - df["profit"]
-
-#     # Calculate drawdown in percentage terms
-#     drawdown_percent = (drawdown_dollar / df["peak"]) * 100
-
-#     # Handle division by zero (if peak is zero)
-#     drawdown_percent = drawdown_percent.fillna(0)
-
-#     # Format the result as "$(%)"
-#     formatted_drawdown = f"{drawdown_dollar.iloc[-1]:.2f} ({drawdown_percent.iloc[-1]:.2f})"
-                        
-#     return formatted_drawdown
+    return {
+        "drawdown": f"{total_dd:.2f} ({total_dd_pct:.0f}%)",
+        "drawdown_buy": f"{buy_dd:.2f} ({buy_pct:.0f}%)",
+        "drawdown_sell": f"{sell_dd:.2f} ({sell_pct:.0f}%)"
+    }
 
 # ==================================================== #
 # TODO test function ✅
