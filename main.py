@@ -1,4 +1,4 @@
-# Standard Library Imports 10
+# Standard Library Imports 108
 import os
 import shutil
 import csv
@@ -460,7 +460,7 @@ def calculate_drawdown(df):
         dict: Drawdown values formatted as "$(%)".
     """
     if df.empty or "profit" not in df.columns:
-        return {"drawdown": "0.00 (0%)", "drawdown_buy": "0.00 (0%)", "drawdown_sell": "0.00 (0%)"}
+        return {"drawdown": "0.00 (0)", "drawdown_buy": "0.00 (0)", "drawdown_sell": "0.00 (0)"}
 
     df = df.sort_index()
 
@@ -498,9 +498,9 @@ def calculate_drawdown(df):
     sell_pct = (sell_dd / total_dd * total_dd_pct) if total_dd > 0 else 0
 
     return {
-        "drawdown": f"{total_dd:.2f} ({total_dd_pct:.0f}%)",
-        "drawdown_buy": f"{buy_dd:.2f} ({buy_pct:.0f}%)",
-        "drawdown_sell": f"{sell_dd:.2f} ({sell_pct:.0f}%)"
+        "drawdown": f"{total_dd:.2f} ({total_dd_pct:.2f})",
+        "drawdown_buy": f"{buy_dd:.2f} ({buy_pct:.2f})",
+        "drawdown_sell": f"{sell_dd:.2f} ({sell_pct:.2f})"
     }
 
 # ==================================================== #
@@ -559,12 +559,12 @@ def calculate_max_min_drawdowns(df):
 
     # Return formatted results
     return {
-        "max_drawdown": f"{max_drawdown_total:.2f} ({max_drawdown_total_pct:.0f}%)",
-        "max_drawdown_buy": f"{max_drawdown_buy:.2f} ({max_drawdown_buy_pct:.0f}%)",
-        "max_drawdown_sell": f"{max_drawdown_sell:.2f} ({max_drawdown_sell_pct:.0f}%)",
-        "min_drawdown": f"{min_drawdown_total:.2f} ({min_drawdown_total_pct:.0f}%)",
-        "min_drawdown_buy": f"{min_drawdown_buy:.2f} ({min_drawdown_buy_pct:.0f}%)",
-        "min_drawdown_sell": f"{min_drawdown_sell:.2f} ({min_drawdown_sell_pct:.0f}%)"
+        "max_drawdown": f"{max_drawdown_total:.2f} ({max_drawdown_total_pct:.2f})",
+        "max_drawdown_buy": f"{max_drawdown_buy:.2f} ({max_drawdown_buy_pct:.2f})",
+        "max_drawdown_sell": f"{max_drawdown_sell:.2f} ({max_drawdown_sell_pct:.2f})",
+        "min_drawdown": f"{min_drawdown_total:.2f} ({min_drawdown_total_pct:.2f})",
+        "min_drawdown_buy": f"{min_drawdown_buy:.2f} ({min_drawdown_buy_pct:.2f})",
+        "min_drawdown_sell": f"{min_drawdown_sell:.2f} ({min_drawdown_sell_pct:.2f})"
     }
 
 # ==================================================== #
