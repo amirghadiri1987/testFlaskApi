@@ -1,4 +1,4 @@
-# Standard Library Imports 08
+# Standard Library Imports 10
 import os
 import shutil
 import csv
@@ -376,14 +376,14 @@ def calculate_outputs(filtered_db_path):
             **calculate_drawdown(df),
             **calculate_max_min_drawdowns(df),
             **calculate_floating_drawdown(df),
-            # **calculate_quantity_metrics(df),
-            # **calculate_profitability_metrics(df),
-            # **calculate_profit_distribution(df),
-            # **calculate_time_metrics(df),
-            # **calculate_time_extremes(df),
-            # **calculate_win_loss_metrics(df),
-            # **calculate_closure_metrics(df),
-            # **calculate_additional_metrics(df)
+            **calculate_quantity_metrics(df),
+            **calculate_profitability_metrics(df),
+            **calculate_profit_distribution(df),
+            **calculate_time_metrics(df),
+            **calculate_time_extremes(df),
+            **calculate_win_loss_metrics(df),
+            **calculate_closure_metrics(df),
+            **calculate_additional_metrics(df)
         }
 
         # Print Test Output
@@ -585,34 +585,58 @@ def calculate_floating_drawdown(df):
               - "drawdown_floating_buy": Dictionary with "current", "max", and "min" for "Buy" trades.
               - "drawdown_floating_sell": Dictionary with "current", "max", and "min" for "Sell" trades.
     """
+    # Initialize results dictionary with default values
+    results = {
+        "drawdown_floating": {
+            "drawdown_floating_current": "N/A (N/A)",
+            "drawdown_floating_max": "N/A (N/A)",
+            "drawdown_floating_min": "N/A (N/A)"
+        },
+        "drawdown_floating_buy": {
+            "drawdown_floating_buy_current": "N/A (N/A)",
+            "drawdown_floating_buy_max": "N/A (N/A)",
+            "drawdown_floating_buy_min": "N/A (N/A)"
+        },
+        "drawdown_floating_sell": {
+            "drawdown_floating_sell_current": "N/A (N/A)",
+            "drawdown_floating_sell_max": "N/A (N/A)",
+            "drawdown_floating_sell_min": "N/A (N/A)"
+        }
+    }
+
+    # Check if DataFrame is empty
+    if df.empty:
+        return results
+
     # Ensure the DataFrame is sorted by index (or time) if not already
     df = df.sort_index()
 
-    # Initialize results dictionary
-    results = {}
-
     # Calculate floating drawdown for the entire dataset
-    results["drawdown_floating"] = {
-        "drawdown_floating_current": f"{df['floating_drawdown_currency'].iloc[-1]:.2f} ({df['floating_drawdown'].iloc[-1]:.2f})",
-        "drawdown_floating_max": f"{df['floating_drawdown_currency'].max():.2f} ({df['floating_drawdown'].max():.2f})",
-        "drawdown_floating_min": f"{df['floating_drawdown_currency'].min():.2f} ({df['floating_drawdown'].min():.2f})"
-    }
+    if not df.empty:
+        current_val = f"{df['floating_drawdown_currency'].iloc[-1]:.2f} ({df['floating_drawdown'].iloc[-1]:.2f})" if not df.empty else "N/A (N/A)"
+        results["drawdown_floating"] = {
+            "drawdown_floating_current": current_val,
+            "drawdown_floating_max": f"{df['floating_drawdown_currency'].max():.2f} ({df['floating_drawdown'].max():.2f})",
+            "drawdown_floating_min": f"{df['floating_drawdown_currency'].min():.2f} ({df['floating_drawdown'].min():.2f})"
+        }
 
     # Calculate floating drawdown for "Buy" trades
     buy_df = df[df["order_type"].str.lower() == "buy"]
-    results["drawdown_floating_buy"] = {
-        "drawdown_floating_buy_current": f"{buy_df['floating_drawdown_currency'].iloc[-1]:.2f} ({buy_df['floating_drawdown'].iloc[-1]:.2f})",
-        "drawdown_floating_buy_max": f"{buy_df['floating_drawdown_currency'].max():.2f} ({buy_df['floating_drawdown'].max():.2f})",
-        "drawdown_floating_buy_min": f"{buy_df['floating_drawdown_currency'].min():.2f} ({buy_df['floating_drawdown'].min():.2f})"
-    }
+    if not buy_df.empty:
+        results["drawdown_floating_buy"] = {
+            "drawdown_floating_buy_current": f"{buy_df['floating_drawdown_currency'].iloc[-1]:.2f} ({buy_df['floating_drawdown'].iloc[-1]:.2f})",
+            "drawdown_floating_buy_max": f"{buy_df['floating_drawdown_currency'].max():.2f} ({buy_df['floating_drawdown'].max():.2f})",
+            "drawdown_floating_buy_min": f"{buy_df['floating_drawdown_currency'].min():.2f} ({buy_df['floating_drawdown'].min():.2f})"
+        }
 
     # Calculate floating drawdown for "Sell" trades
     sell_df = df[df["order_type"].str.lower() == "sell"]
-    results["drawdown_floating_sell"] = {
-        "drawdown_floating_sell_current": f"{sell_df['floating_drawdown_currency'].iloc[-1]:.2f} ({sell_df['floating_drawdown'].iloc[-1]:.2f})",
-        "drawdown_floating_sell_max": f"{sell_df['floating_drawdown_currency'].max():.2f} ({sell_df['floating_drawdown'].max():.2f})",
-        "drawdown_floating_sell_min": f"{sell_df['floating_drawdown_currency'].min():.2f} ({sell_df['floating_drawdown'].min():.2f})"
-    }
+    if not sell_df.empty:
+        results["drawdown_floating_sell"] = {
+            "drawdown_floating_sell_current": f"{sell_df['floating_drawdown_currency'].iloc[-1]:.2f} ({sell_df['floating_drawdown'].iloc[-1]:.2f})",
+            "drawdown_floating_sell_max": f"{sell_df['floating_drawdown_currency'].max():.2f} ({sell_df['floating_drawdown'].max():.2f})",
+            "drawdown_floating_sell_min": f"{sell_df['floating_drawdown_currency'].min():.2f} ({sell_df['floating_drawdown'].min():.2f})"
+        }
 
     return results
 
