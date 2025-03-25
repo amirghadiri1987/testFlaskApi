@@ -1,5 +1,4 @@
-# 100
-# Standard Library Imports
+# Standard Library Imports 03
 import os
 import shutil
 import csv
@@ -375,15 +374,16 @@ def calculate_outputs(filtered_db_path):
             "NetLoss": calculate_net_loss(df),
             "Balance_mDD": calculate_balance_max_drawdown(df),
             **calculate_drawdown(df),
-            **calculate_max_min_drawdowns(df),
-            **calculate_quantity_metrics(df),
-            **calculate_profitability_metrics(df),
-            **calculate_profit_distribution(df),
-            **calculate_time_metrics(df),
-            **calculate_time_extremes(df),
-            **calculate_win_loss_metrics(df),
-            **calculate_closure_metrics(df),
-            **calculate_additional_metrics(df)
+            # **calculate_max_min_drawdowns(df),
+            # **calculate_floating_drawdown(df),
+            # **calculate_quantity_metrics(df),
+            # **calculate_profitability_metrics(df),
+            # **calculate_profit_distribution(df),
+            # **calculate_time_metrics(df),
+            # **calculate_time_extremes(df),
+            # **calculate_win_loss_metrics(df),
+            # **calculate_closure_metrics(df),
+            # **calculate_additional_metrics(df)
         }
 
         # Print Test Output
@@ -518,31 +518,41 @@ def calculate_max_min_drawdowns(df):
     if df.empty or "profit" not in df.columns or "order_type" not in df.columns:
         return {}
 
-    df = df.sort_index()
-    
+    # Calculate cumulative maximum profit (peak)
+    df["peak"] = df["profit"].cummax()
+
     # Total Drawdowns
-    max_drawdown_total = (df["peak"] - df["profit"]).max()
-    min_drawdown_total = (df["peak"] - df["profit"]).min()
+    drawdowns_total = df["peak"] - df["profit"]
+    max_drawdown_total = drawdowns_total.max()
+    min_drawdown_total = drawdowns_total[drawdowns_total > 0].min() if any(drawdowns_total > 0) else 0
 
     # Maximum and Minimum Drawdown for Buy Trades
     buy_df = df[df["order_type"] == "buy"]
-    max_drawdown_buy = (buy_df["peak"] - buy_df["profit"]).max() if not buy_df.empty else 0
-    min_drawdown_buy = (buy_df["peak"] - buy_df["profit"]).min() if not buy_df.empty else 0
+    if not buy_df.empty:
+        drawdowns_buy = buy_df["peak"] - buy_df["profit"]
+        max_drawdown_buy = drawdowns_buy.max()
+        min_drawdown_buy = drawdowns_buy[drawdowns_buy > 0].min() if any(drawdowns_buy > 0) else 0
+    else:
+        max_drawdown_buy = min_drawdown_buy = 0
 
     # Maximum and Minimum Drawdown for Sell Trades
     sell_df = df[df["order_type"] == "sell"]
-    max_drawdown_sell = (sell_df["peak"] - sell_df["profit"]).max() if not sell_df.empty else 0
-    min_drawdown_sell = (sell_df["peak"] - sell_df["profit"]).min() if not sell_df.empty else 0
+    if not sell_df.empty:
+        drawdowns_sell = sell_df["peak"] - sell_df["profit"]
+        max_drawdown_sell = drawdowns_sell.max()
+        min_drawdown_sell = drawdowns_sell[drawdowns_sell > 0].min() if any(drawdowns_sell > 0) else 0
+    else:
+        max_drawdown_sell = min_drawdown_sell = 0
 
-    # Calculate percentages
+    # Calculate percentages based on peak value
     peak_value = df["peak"].max()
     if peak_value > 0:
         max_drawdown_total_pct = (max_drawdown_total / peak_value) * 100
-        min_drawdown_total_pct = (min_drawdown_total / peak_value) * 100
+        min_drawdown_total_pct = (min_drawdown_total / peak_value) * 100 if min_drawdown_total > 0 else 0
         max_drawdown_buy_pct = (max_drawdown_buy / peak_value) * 100
-        min_drawdown_buy_pct = (min_drawdown_buy / peak_value) * 100
+        min_drawdown_buy_pct = (min_drawdown_buy / peak_value) * 100 if min_drawdown_buy > 0 else 0
         max_drawdown_sell_pct = (max_drawdown_sell / peak_value) * 100
-        min_drawdown_sell_pct = (min_drawdown_sell / peak_value) * 100
+        min_drawdown_sell_pct = (min_drawdown_sell / peak_value) * 100 if min_drawdown_sell > 0 else 0
     else:
         max_drawdown_total_pct = max_drawdown_buy_pct = max_drawdown_sell_pct = 0
         min_drawdown_total_pct = min_drawdown_buy_pct = min_drawdown_sell_pct = 0
@@ -556,109 +566,6 @@ def calculate_max_min_drawdowns(df):
         "min_drawdown_buy": f"{min_drawdown_buy:.2f} ({min_drawdown_buy_pct:.0f}%)",
         "min_drawdown_sell": f"{min_drawdown_sell:.2f} ({min_drawdown_sell_pct:.0f}%)"
     }
-
-
-
-# ==================================================== #
-# TODO test function ✅
-
-
-# ==================================================== #
-# TODO test function ✅
-
-
-
-def calculate_drawdowns(df):
-    """
-    Calculate drawdown in both dollar and percentage terms for the entire dataset,
-    as well as separately for "Buy" and "Sell" types. Also compute the maximum,
-    minimum, and current drawdown values for each drawdown metric.
-
-    Parameters:
-        df (pd.DataFrame): DataFrame containing "profit" and "order_type" columns.
-
-    Returns:
-        dict: A dictionary containing:
-              - "drawdown": Dictionary with "max", "min", and "current" for overall drawdown.
-              - "drawdown_Buy": Dictionary with "max", "min", and "current" for "Buy" trades.
-              - "drawdown_Sell": Dictionary with "max", "min", and "current" for "Sell" trades.
-    """
-    # Ensure the DataFrame is sorted by index (or time) if not already
-    df = df.sort_index()
-
-    # Initialize results dictionary
-    results = {}
-
-    # Check if the DataFrame is empty
-    if df.empty:
-        return {
-            "drawdown": {
-                "drawdown_max": "0.00 (0%)",
-                "drawdown_min": "0.00 (0%)",
-                "drawdown_current": "0.00 (0%)"
-            },
-            "drawdown_Buy": {
-                "drawdown_Buy_max": "0.00 (0%)",
-                "drawdown_Buy_min": "0.00 (0%)",
-                "drawdown_Buy_current": "0.00 (0%)"
-            },
-            "drawdown_Sell": {
-                "drawdown_Sell_max": "0.00 (0%)",
-                "drawdown_Sell_min": "0.00 (0%)",
-                "drawdown_Sell_current": "0.00 (0%)"
-            }
-        }
-
-    # Calculate drawdown for the entire dataset
-    df["peak"] = df["profit"].cummax()
-    drawdown_dollar = df["peak"] - df["profit"]
-    drawdown_percent = (drawdown_dollar / df["peak"]) * 100
-    drawdown_percent = drawdown_percent.fillna(0)
-    results["drawdown"] = {
-        "drawdown_max": f"{drawdown_dollar.max():.2f} ({drawdown_percent.max():.0f}%)",
-        "drawdown_min": f"{drawdown_dollar.min():.2f} ({drawdown_percent.min():.0f}%)",
-        "drawdown_current": f"{drawdown_dollar.iloc[-1]:.2f} ({drawdown_percent.iloc[-1]:.0f}%)"
-    }
-
-    # Calculate drawdown for "Buy" trades
-    buy_df = df[df["order_type"].str.lower() == "buy"]
-    if not buy_df.empty:
-        buy_df["peak"] = buy_df["profit"].cummax()
-        buy_drawdown_dollar = buy_df["peak"] - buy_df["profit"]
-        buy_drawdown_percent = (buy_drawdown_dollar / buy_df["peak"]) * 100
-        buy_drawdown_percent = buy_drawdown_percent.fillna(0)
-        results["drawdown_Buy"] = {
-            "drawdown_Buy_max": f"{buy_drawdown_dollar.max():.2f} ({buy_drawdown_percent.max():.0f}%)",
-            "drawdown_Buy_min": f"{buy_drawdown_dollar.min():.2f} ({buy_drawdown_percent.min():.0f}%)",
-            "drawdown_Buy_current": f"{buy_drawdown_dollar.iloc[-1]:.2f} ({buy_drawdown_percent.iloc[-1]:.0f}%)"
-        }
-    else:
-        results["drawdown_Buy"] = {
-            "drawdown_Buy_max": "0.00 (0%)",
-            "drawdown_Buy_min": "0.00 (0%)",
-            "drawdown_Buy_current": "0.00 (0%)"
-        }
-
-    # Calculate drawdown for "Sell" trades
-    sell_df = df[df["order_type"].str.lower() == "sell"]
-    if not sell_df.empty:
-        sell_df["peak"] = sell_df["profit"].cummax()
-        sell_drawdown_dollar = sell_df["peak"] - sell_df["profit"]
-        sell_drawdown_percent = (sell_drawdown_dollar / sell_df["peak"]) * 100
-        sell_drawdown_percent = sell_drawdown_percent.fillna(0)
-        results["drawdown_Sell"] = {
-            "drawdown_Sell_max": f"{sell_drawdown_dollar.max():.2f} ({sell_drawdown_percent.max():.0f}%)",
-            "drawdown_Sell_min": f"{sell_drawdown_dollar.min():.2f} ({sell_drawdown_percent.min():.0f}%)",
-            "drawdown_Sell_current": f"{sell_drawdown_dollar.iloc[-1]:.2f} ({sell_drawdown_percent.iloc[-1]:.0f}%)"
-        }
-    else:
-        results["drawdown_Sell"] = {
-            "drawdown_Sell_max": "0.00 (0%)",
-            "drawdown_Sell_min": "0.00 (0%)",
-            "drawdown_Sell_current": "0.00 (0%)"
-        }
-
-    return results
 
 # ==================================================== #
 # TODO test function ✅
@@ -919,34 +826,6 @@ def calculate_win_loss_metrics(df):
 
 # ==================================================== #
 # TODO test function ✅
-def calculate_closure_metrics(df):
-    """
-    Calculate trade closure reasons (Order, SL, TP).
-    """
-    # Normalize column names by stripping whitespace and converting to lowercase
-    df.columns = df.columns.str.strip().str.lower()
-
-    total_trades = len(df)
-    closed_by_order = df[df["close_comment"].str.contains("order", case=False, na=False)]
-    closed_by_sl = df[df["close_comment"].str.contains("sl", case=False, na=False)]
-    closed_by_tp = df[df["close_comment"].str.contains("tp", case=False, na=False)]
-    
-    closed_by_order_count = len(closed_by_order)
-    closed_by_sl_count = len(closed_by_sl)
-    closed_by_tp_count = len(closed_by_tp)
-    
-    closed_by_order_percentage = (closed_by_order_count / total_trades) * 100 if total_trades != 0 else 0
-    closed_by_sl_percentage = (closed_by_sl_count / total_trades) * 100 if total_trades != 0 else 0
-    closed_by_tp_percentage = (closed_by_tp_count / total_trades) * 100 if total_trades != 0 else 0
-    
-    return {
-        "Closed_by_Order": f"{closed_by_order_count} ({closed_by_order_percentage:.2f})",
-        "Closed_by_SL": f"{closed_by_sl_count} ({closed_by_sl_percentage:.2f})",
-        "Closed_by_TP": f"{closed_by_tp_count} ({closed_by_tp_percentage:.2f})"
-    }
-
-# ==================================================== #
-# TODO test function ✅
 def calculate_time_metrics(df):
     """
     Calculate time-based metrics.
@@ -1062,7 +941,7 @@ def calculate_additional_metrics(df):
     results["losing_streak"] = f"{losing_streak:.2f} USD ({losing_streak_count})"
 
     # 8. Sum Lots
-    sum_lots = round(df["lots"].sum(), 2)  # Round to 2 decimal places
+    sum_lots = round(df["volume"].sum(), 2)  # Round to 2 decimal places
     results["sum_lots"] = sum_lots
 
     # 9. Sum Commission
