@@ -1,4 +1,4 @@
-# Standard Library Imports 05
+# Standard Library Imports 08
 import os
 import shutil
 import csv
@@ -375,7 +375,7 @@ def calculate_outputs(filtered_db_path):
             "Balance_mDD": calculate_balance_max_drawdown(df),
             **calculate_drawdown(df),
             **calculate_max_min_drawdowns(df),
-            # **calculate_floating_drawdown(df),
+            **calculate_floating_drawdown(df),
             # **calculate_quantity_metrics(df),
             # **calculate_profitability_metrics(df),
             # **calculate_profit_distribution(df),
